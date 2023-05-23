@@ -2,6 +2,8 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from rest_framework.exceptions import ValidationError
 
+MAX_LENGHT = 150
+
 
 class User(AbstractUser):
     email = models.EmailField(
@@ -11,11 +13,11 @@ class User(AbstractUser):
     )
     first_name = models.CharField(
         verbose_name='Имя',
-        max_length=150,
+        max_length=MAX_LENGHT,
     )
     last_name = models.CharField(
         verbose_name='Фамилия',
-        max_length=150,
+        max_length=MAX_LENGHT,
     )
 
     USERNAME_FIELD = 'email'
@@ -30,7 +32,6 @@ class User(AbstractUser):
                 name='unique_user'
             )
         ]
-        ordering = ['id']
 
     def __str__(self):
         return self.username

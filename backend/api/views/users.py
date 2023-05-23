@@ -22,6 +22,7 @@ class CustomUserViewSet(UserViewSet):
     pagination_class = LimitPageNumberPagination
 
     def get_permissions(self):
+        """Проверка и установка разрешений для текущего пользователя."""
         if self.action == 'me':
             self.permission_classes = (IsAuthenticated,)
         return super().get_permissions()
@@ -32,20 +33,19 @@ class CustomUserViewSet(UserViewSet):
         permission_classes=[IsAuthenticated]
     )
     def subscriptions(self, request):
+        """Получает мои подписки."""
         subscriptions = User.objects.filter(following__user=self.request.user)
-        print(subscriptions)
         page = self.paginate_queryset(subscriptions)
-        print(page)
         serializer = FollowSerializer(
             page,
             many=True,
             context={'request': request}
         )
-        print(serializer)
         return self.get_paginated_response(serializer.data)
 
     @action(methods=['POST', 'DELETE'], detail=True)
     def subscribe(self, request, id):
+        """Добавляет/удалет подписку на пользователя."""
         user = request.user
         author = get_object_or_404(User, id=id)
         subscription = Follow.objects.filter(user=user, author=author)
@@ -65,11 +65,10 @@ class CustomUserViewSet(UserViewSet):
             Follow.objects.create(user=user, author=author)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        if request.method == 'DELETE':
-            if subscription.exists():
-                subscription.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response(
-                {'error': 'Вы не подписаны на этого пользователя'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        if subscription.exists():
+            subscription.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            {'error': 'Вы не подписаны на этого пользователя'},
+            status=status.HTTP_400_BAD_REQUEST
+        )

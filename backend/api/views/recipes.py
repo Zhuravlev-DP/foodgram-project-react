@@ -2,7 +2,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from reportlab.pdfbase import pdfmetrics, ttfonts
-from reportlab.pdfgen import canvas
+from reportlab.pdfgen.canvas import Canvas
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -68,56 +68,61 @@ class RecipeViewSet(viewsets.ModelViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        if self.request.method == 'DELETE':
-            if object.exists():
-                object.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response({'error': 'Этого рецепта не было в cписке'},
-                            status=status.HTTP_400_BAD_REQUEST)
+        if object.exists():
+            object.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            {'error': 'Этого рецепта не было в cписке'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     @action(methods=['POST', 'DELETE'], detail=True)
     def favorite(self, request, pk):
+        """Добавляет/удалет рецепт в избранное."""
         return self.action_post_delete(pk, FavoriteSerializer)
 
     @action(methods=['POST', 'DELETE'], detail=True)
     def shopping_cart(self, request, pk):
+        """Добавляет/удалет рецепт в список покупок."""
         return self.action_post_delete(pk, ShoppingCartSerializer)
 
     @action(detail=False, methods=['get'],
             permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
+        """Загружает файл .pdf со списком покупок."""
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = (
             "attachment; filename='shopping_cart.pdf'"
         )
-        p = canvas.Canvas(response)
-        arial = ttfonts.TTFont('Arial', 'data/arial.ttf')
-        pdfmetrics.registerFont(arial)
-        p.setFont('Arial', 14)
+        canvas = Canvas(response)
+        font_arial = ttfonts.TTFont('Arial', 'data/arial.ttf')
+        pdfmetrics.registerFont(font_arial)
+        canvas.setFont('Arial', 14)
 
         ingredients = RecipeIngredient.objects.filter(
-            recipe__shopping_cart__user=request.user).values_list(
+            recipe__shopping_cart__user=request.user
+        ).values_list(
             'ingredient__name',
             'amount',
             'ingredient__measurement_unit'
-            )
+        )
 
-        ingr_list = {}
+        shopping_list = {}
         for name, amount, unit in ingredients:
-            if name not in ingr_list:
-                ingr_list[name] = {'amount': amount, 'unit': unit}
+            if name not in shopping_list:
+                shopping_list[name] = {'amount': amount, 'unit': unit}
             else:
-                ingr_list[name]['amount'] += amount
+                shopping_list[name]['amount'] += amount
         height = 700
 
-        p.drawString(100, 750, 'Список покупок')
-        for i, (name, data) in enumerate(ingr_list.items(), start=1):
-            p.drawString(
+        canvas.drawString(100, 750, 'Список покупок')
+        for number, (name, data) in enumerate(shopping_list.items(), start=1):
+            canvas.drawString(
                 80,
                 height,
-                f"{i}. {name} – {data['amount']} {data['unit']}"
+                f"{number}. {name} – {data['amount']} {data['unit']}"
             )
             height -= 25
-        p.showPage()
-        p.save()
+        canvas.showPage()
+        canvas.save()
         return response

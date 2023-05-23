@@ -19,16 +19,19 @@ class CustomUserSerializer(UserSerializer):
             'is_subscribed'
         )
 
-    def get_is_subscribed(self, obj):
-        request_user = self.context['request'].user
-        if request_user.is_anonymous:
+    def get_is_subscribed(self, object):
+        """Проверка подписан ли пользователь на автора."""
+        request = self.context['request']
+        if not request or request.user.is_anonymous:
             return False
-        return Follow.objects.filter(user=request_user, author=obj.id).exists()
+        return Follow.objects.filter(
+            user=request.user,
+            author=object.id
+        ).exists()
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
-    """Сериализатор обработки запросов создания пользователя.
-    Валидация создание пользователя с юзернеймом 'me'."""
+    """Сериализатор обработки запросов создания пользователя."""
     class Meta:
         model = User
         fields = (
@@ -37,10 +40,12 @@ class CustomUserCreateSerializer(UserCreateSerializer):
             'username',
             'first_name',
             'last_name',
-            'password')
+            'password'
+        )
         extra_kwargs = {"password": {"write_only": True}}
 
     def validate_username(self, username):
+        """Валидация создание пользователя с юзернеймом 'me'."""
         if username == 'me':
             raise serializers.ValidationError(
                 'Пользователя с username = me нельзя создавать.',
@@ -61,6 +66,7 @@ class FollowSerializer(CustomUserSerializer):
         )
 
     def get_recipes(self, obj):
+        """Получить рецепты."""
         from api.serializers.recipes import RecipeInfoSerializer
 
         request = self.context['request']
@@ -72,4 +78,5 @@ class FollowSerializer(CustomUserSerializer):
         return RecipeInfoSerializer(queryset, context=context, many=True).data
 
     def get_recipes_count(self, obj):
+        """Получить количество рецептов."""
         return obj.recipes.count()
