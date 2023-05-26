@@ -59,7 +59,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         """Возвращает ответ через RecipeInfoSerializer."""
-        context = {'request': self.context['request']}
+        context = {'request': self.context.get('request')}
         serializer = RecipeInfoSerializer(
             instance=instance.recipe,
             context=context
@@ -164,11 +164,12 @@ class RecipeSerializer(serializers.ModelSerializer):
                 recipe=recipe,
                 ingredient=ingredient['ingredient'],
                 amount=ingredient['amount']
-            ) for ingredient in ingredients)
+            ) for ingredient in ingredients
+        )
 
     def create(self, validated_data):
         """"Сохранение ингредиентов и тегов рецепта."""
-        user = self.context['request'].user
+        user = self.context.get('request').user
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
         recipe = Recipe.objects.create(author=user, **validated_data)
@@ -191,7 +192,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         """Возвращает ответ через GetRecipeSerializer."""
-        context = {'request': self.context['request']}
+        context = {'request': self.context.get('request')}
         return GetRecipeSerializer(instance, context=context).data
 
 
@@ -224,14 +225,14 @@ class GetRecipeSerializer(serializers.ModelSerializer):
 
     def get_is_favorited(self, object):
         """Проверка добавлен ли рецепт в избранное."""
-        request = self.context['request']
+        request = self.context.get('request')
         if not request or request.user.is_anonymous:
             return False
         return object.favorite.filter(user=request.user).exists()
 
     def get_is_in_shopping_cart(self, object):
         """Проверка добавлен ли рецепт в список покупок(корзина)."""
-        request = self.context['request']
+        request = self.context.get('request')
         if not request or request.user.is_anonymous:
             return False
         return object.shopping_cart.filter(user=request.user).exists()

@@ -21,7 +21,7 @@ class CustomUserSerializer(UserSerializer):
 
     def get_is_subscribed(self, object):
         """Проверка подписан ли пользователь на автора."""
-        request = self.context['request']
+        request = self.context.get('request')
         if not request or request.user.is_anonymous:
             return False
         return Follow.objects.filter(
@@ -69,7 +69,7 @@ class FollowSerializer(CustomUserSerializer):
         """Получить рецепты."""
         from api.serializers.recipes import RecipeInfoSerializer
 
-        request = self.context['request']
+        request = self.context.get('request')
         context = {'request': request}
         recipes_limit = request.query_params.get('recipes_limit')
         queryset = obj.recipes.all()
