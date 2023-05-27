@@ -25,13 +25,15 @@ class TagAdmin(admin.ModelAdmin):
 class RecipeAdmin(admin.ModelAdmin):
     list_display = ('name', 'author', 'pub_date', 'display_tags', 'favorite')
     list_filter = ('name', 'author__username', 'tags__name',)
-    search_fields = ('name', 'author__recipes_username', 'tags__recipes_name',)
+    search_fields = ['name', 'author__username', 'tags__name']
     readonly_fields = ('favorite',)
-    fields = ('image',
-              ('name', 'author'),
-              'text',
-              ('tags', 'cooking_time'),
-              'favorite')
+    fields = (
+        'image',
+        ('name', 'author'),
+        'text',
+        ('tags', 'cooking_time'),
+        'favorite'
+    )
 
     def display_tags(self, obj):
         return ', '.join([tag.name for tag in obj.tags.all()])
