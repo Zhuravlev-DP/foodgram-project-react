@@ -96,7 +96,6 @@ DATABASES = {
     }
 }
 ```
-
 - Запуск сервера
 ```bash
 python manage.py runserver
