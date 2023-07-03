@@ -63,17 +63,17 @@ docker-compose exec backend python manage.py createsuperuser
 docker-compose exec backend python manage.py load_data
 ```
 - Стандартная админ-панель Django доступна по адресу [`https://localhost/admin/`](https://localhost/admin/)
-- Документация к проекту доступна по адресу [`https://localhost/api/docs/`](`https://localhost/api/docs/`)
+- Документация к проекту доступна по адресу [`https://localhost/api/docs/`](https://localhost/api/docs/)
 
 #### Запуск API проекта в dev-режиме
 
 - Клонирование удаленного репозитория (см. выше)
 - Создание виртуального окружения и установка зависимостей
 ```bash
-cd backend
-python -m venv venv
-. venv/Scripts/activate (windows)
-. venv/bin/activate (linux)
+python -m venv venv (windows)
+python3 -m venv venv (linux)
+. source venv/Scripts/activate (windows)
+. source venv/bin/activate (linux)
 pip install --upgade pip
 pip install -r -requirements.txt
 ```
